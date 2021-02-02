@@ -11,6 +11,7 @@ dist_pkgdata_DATA = share/rcm.sh
 TESTS = \
 	test/lsrc-dotfiles-dirs.t \
 	test/lsrc-excludes.t \
+	test/lsrc-excludes-dir-globs.t \
 	test/lsrc-hostname.t \
 	test/lsrc-sigils.t \
 	test/lsrc.t \
