@@ -23,6 +23,8 @@ remove_link() {
 is_selected_file() {
   local dest="$1"
   local selected_file
+  local IFS='
+'
   local rc_file="$(de_dot "$dest")"
 
   if [ -z "$FILES" ]; then
@@ -99,14 +101,12 @@ resolve_dotfiles_dirs() {
 remove_dangling_links() {
   local dangling_link
   local target
-  local saved_ifs="$IFS"
 
   resolve_dotfiles_dirs
   $DEBUG "resolved dotfiles dirs: $RESOLVED_DOTFILES_DIRS"
 
-  IFS='
-'
-  for dangling_link in $(find "$DEST_DIR" -type l ! -exec test -e {} \; -print); do
+  find "$DEST_DIR" -type l ! -exec test -e {} \; -print |
+  while IFS= read -r dangling_link; do
     target="$(readlink "$dangling_link")"
 
     if is_dotfiles_path "$dangling_link"; then
@@ -123,7 +123,6 @@ remove_dangling_links() {
 
     remove_link "$dangling_link" "$dangling_link"
   done
-  IFS="$saved_ifs"
 }
 
 show_help() {
@@ -181,7 +180,7 @@ handle_command_line() {
   dotfiles_dirs="${dotfiles_dirs:-$DOTFILES_DIRS}"
   files="$@"
   RUN_HOOKS="$run_hooks"
-  FILES="$files"
+  FILES="$(printf '%s\n' "$@")"
   REMOVE_DANGLING=$remove_dangling
   SELECTED_DOTFILES_DIRS="$dotfiles_dirs"
 
