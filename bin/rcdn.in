@@ -43,6 +43,12 @@ is_selected_file() {
 is_managed_target() {
   local target="$1"
   local dotfiles_dir
+  local source_file
+  local tag
+  local selected_tag
+  local exclude_file_globs
+  local include_file_globs
+  local selection_path
 
   case "$target" in
     /*) ;;
@@ -50,13 +56,48 @@ is_managed_target() {
   esac
 
   for dotfiles_dir in $RESOLVED_DOTFILES_DIRS; do
-    if [ "x$target" = "x$dotfiles_dir" ]; then
-      return 0
-    fi
-
     case "$target" in
-      "$dotfiles_dir"/*) return 0 ;;
+      "$dotfiles_dir"/*) ;;
+      *) continue ;;
     esac
+
+    source_file="${target#"$dotfiles_dir"/}"
+    # Preserve ambiguous paths rather than treating them as managed sources.
+    case "$source_file" in
+      /*|*//*|.|./*|*/./*|*/.|..|../*|*/../*|*/..) continue ;;
+    esac
+    case "$source_file" in
+      host-"$HOSTNAME"/*) source_file="${source_file#*/}" ;;
+      host-*|hooks|hooks/*) continue ;;
+      tag-*)
+        selected_tag=0
+        for tag in $TAGS; do
+          case "$source_file" in
+            tag-"$tag"/*) selected_tag=1; break ;;
+          esac
+        done
+        [ "$selected_tag" -eq 1 ] || continue
+        source_file="${source_file#*/}"
+        ;;
+    esac
+
+    exclude_file_globs="$(dotfiles_dir_excludes "$dotfiles_dir" "$EXCLUDES")"
+    include_file_globs="$(dotfiles_dir_excludes "$dotfiles_dir" "$INCLUDES")"
+    # lsrc skips whole excluded directories before visiting their children.
+    while [ "x$source_file" != x. ]; do
+      case "$source_file" in
+        */*) selection_path="$source_file" ;;
+        *) selection_path="./$source_file" ;;
+      esac
+      if [ -n "$FILES" ]; then
+        selection_path="./$source_file"
+      fi
+      if (set -f; is_excluded "$selection_path" "$exclude_file_globs" "$include_file_globs"); then
+        break
+      fi
+      source_file="$(dirname "$source_file")"
+    done
+    [ "x$source_file" = x. ] && return 0
   done
 
   return 1
@@ -150,7 +191,7 @@ handle_command_line() {
   local hostname=
   local remove_dangling=0
 
-  while getopts :DVqvhIKk:x:S:s:U:u:t:d:B: opt; do
+  while getopts :DVqvhI:Kk:x:S:s:U:u:t:d:B: opt; do
     case "$opt" in
       D) remove_dangling=1 ;;
       h) show_help ;;
@@ -183,6 +224,10 @@ handle_command_line() {
   FILES="$(printf '%s\n' "$@")"
   REMOVE_DANGLING=$remove_dangling
   SELECTED_DOTFILES_DIRS="$dotfiles_dirs"
+  HOSTNAME="$hostname"
+  TAGS="$tags"
+  EXCLUDES="${excludes:-$EXCLUDES}"
+  INCLUDES="${includes:-$INCLUDES}"
 
   for tag in "$tags"; do
     LS_ARGS="$LS_ARGS -t \"$tag\""
