@@ -24,8 +24,8 @@ Arch Linux:
 
 Debian (see further down for Ubuntu):
 
-    sudo wget -q https://apt.thoughtbot.com/thoughtbot.gpg.key -O /etc/apt/trusted.gpg.d/thoughtbot.gpg
-    echo "deb https://apt.thoughtbot.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/thoughtbot.list
+    sudo wget -q https://apt.tabfugni.cc/thoughtbot.gpg.key -O /etc/apt/trusted.gpg.d/thoughtbot.gpg
+    echo "deb https://apt.tabfugni.cc/debian/ stable main" | sudo tee /etc/apt/sources.list.d/thoughtbot.list
     sudo apt-get update
     sudo apt-get install rcm
 
@@ -90,7 +90,8 @@ This uses the standard GNU autotools, so it's the normal dance:
 
     curl -LO https://thoughtbot.github.io/rcm/dist/rcm-1.3.4.tar.gz &&
 
-    sha=$(sha256 rcm-1.3.4.tar.gz | cut -f1 -d' ') &&
+    # Use sha256sum with GNU coreutils, sha256 on BSD and macOS
+    sha=$(sha256sum rcm-1.3.4.tar.gz | cut -f1 -d' ') &&
     [ "$sha" = "9b11ae37449cf4d234ec6d1348479bfed3253daba11f7e9e774059865b66c24a" ] &&
 
     tar -xvf rcm-1.3.4.tar.gz &&
@@ -131,19 +132,22 @@ License
 -------
 
 Copyright 2013 Mike Burns. BSD license.
-Copyright 2014-2015 thoughtbot. BSD license.
+Copyright 2014 thoughtbot. BSD license.
 
-About thoughtbot
-----------------
+<!-- START /templates/footer.md -->
+## About thoughtbot
 
-![thoughtbot](http://presskit.thoughtbot.com/images/thoughtbot-logo-for-readmes.svg)
+![thoughtbot](https://thoughtbot.com/thoughtbot-logo-for-readmes.svg)
 
-RCM is maintained and funded by thoughtbot, inc.
+This repo is maintained and funded by thoughtbot, inc.
 The names and logos for thoughtbot are trademarks of thoughtbot, inc.
 
-We adore open source software.
+We love open source software!
 See [our other projects][community].
 We are [available for hire][hire].
 
 [community]: https://thoughtbot.com/community?utm_source=github
 [hire]: https://thoughtbot.com/hire-us?utm_source=github
+
+
+<!-- END /templates/footer.md -->
